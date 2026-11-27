@@ -1,6 +1,8 @@
 import { PrismaPg } from "@prisma/adapter-pg";
 import { Pool } from "pg";
 
+import { pgPoolConfig } from "./pg-ssl";
+
 import { bookingIdempotencyKeyExtension } from "./extensions/booking-idempotency-key";
 import { disallowUndefinedDeleteUpdateManyExtension } from "./extensions/disallow-undefined-delete-update-many";
 import { excludeLockedUsersExtension } from "./extensions/exclude-locked-users";
@@ -10,14 +12,10 @@ import { PrismaClient, type Prisma } from "./generated/prisma/client";
 const connectionString = process.env.DATABASE_URL || "";
 const pool =
   process.env.USE_POOL === "true" || process.env.USE_POOL === "1"
-    ? new Pool({
-        connectionString: connectionString,
-        max: 5,
-        idleTimeoutMillis: 300000,
-      })
+    ? new Pool(pgPoolConfig(connectionString, { max: 5, idleTimeoutMillis: 300000 }))
     : undefined;
 
-const adapter = pool ? new PrismaPg(pool) : new PrismaPg({ connectionString });
+const adapter = pool ? new PrismaPg(pool) : new PrismaPg(pgPoolConfig(connectionString));
 const prismaOptions: Prisma.PrismaClientOptions = {
   adapter,
 };
@@ -52,7 +50,7 @@ export const customPrisma = (options?: Prisma.PrismaClientOptions) => {
 
   if (options?.datasources?.db?.url) {
     const customConnectionString = options.datasources.db.url;
-    const customAdapter = new PrismaPg({ connectionString: customConnectionString });
+    const customAdapter = new PrismaPg(pgPoolConfig(customConnectionString));
 
     const { datasources: _datasources, ...restOptions } = options;
     finalOptions = {

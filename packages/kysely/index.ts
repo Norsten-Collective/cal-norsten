@@ -1,13 +1,14 @@
 import process from "node:process";
 import { DeduplicateJoinsPlugin, Kysely, ParseJSONResultsPlugin, PostgresDialect } from "kysely";
 import { Pool } from "pg";
+import { pgPoolConfig } from "@calcom/prisma/pg-ssl";
 import type { Booking, DB } from "./types";
 
 export type { DB, Booking };
 
 const connectionString = process.env.DATABASE_URL ?? "postgresql://postgres:@localhost:5450/calendso";
 
-const pool = new Pool({ connectionString });
+const pool = new Pool(pgPoolConfig(connectionString));
 
 // 3. Create the Dialect, passing the configured pool instance
 const dialect = new PostgresDialect({
